@@ -1,0 +1,36 @@
+{
+  "name": "spinner-recruit",
+  "version": "0.4.1",
+  "description": "Run `claude`, `codex`, or any terminal coding agent through spinner-recruit to see a one-line job ad in its own tmux pane while it thinks. You keep 50% of paid-ad impression revenue.",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "codex",
+    "cli",
+    "tmux",
+    "job-ads",
+    "developer-tools"
+  ],
+  "homepage": "https://spinnerrecruit-web.vercel.app",
+  "author": "jamesmu03",
+  "license": "MIT",
+  "bin": {
+    "spinner-recruit": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0"
+  }
+}
