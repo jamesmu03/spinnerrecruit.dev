@@ -34,7 +34,7 @@ const AD_PANE_LINES = 2;
 // original implementation below is kept, unreachable, as a record of how the
 // product worked.
 const SUNSET = true;
-const SUNSET_URL = "https://spinnerrecruit.dev";
+const SUNSET_URL = "https://jamesmu03.github.io/spinnerrecruit.dev";
 
 const SUNSET_HELP_TEXT = `spinner-recruit has been retired — no ads are served and no network calls are made.
 
@@ -42,7 +42,7 @@ const SUNSET_HELP_TEXT = `spinner-recruit has been retired — no ads are served
   spinner-recruit uninstall [tool]      remove the \`claude\` (or [tool]) shim that \`install\` set up
   spinner-recruit log                   print the ads you were shown while it was live
 
-Project write-up: ${SUNSET_URL}
+Archived site: ${SUNSET_URL}
 `;
 
 const HELP_TEXT = `Usage: spinner-recruit <command> [args]

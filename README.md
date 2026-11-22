@@ -4,8 +4,8 @@
 > API, dashboards, payments and payouts are shut down. From 0.5.0 on, this CLI
 > runs the wrapped command directly, with no tmux, no ads and no network
 > calls. If you ran `spinner-recruit install`, remove the shim with
-> `npx spinner-recruit uninstall`. Project write-up:
-> [spinnerrecruit.dev](https://spinnerrecruit.dev). Everything below describes
+> `npx spinner-recruit uninstall`. Archived site:
+> [jamesmu03.github.io/spinnerrecruit.dev](https://jamesmu03.github.io/spinnerrecruit.dev). Everything below describes
 > how it worked while it was live.
 
 Run `claude`, `codex`, or any terminal coding agent through this wrapper
