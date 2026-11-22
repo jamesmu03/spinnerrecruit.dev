@@ -1,5 +1,13 @@
 # spinner-recruit (CLI)
 
+> **Retired (November 2026).** SpinnerRecruit is no longer running: the ad
+> API, dashboards, payments and payouts are shut down. From 0.5.0 on, this CLI
+> runs the wrapped command directly, with no tmux, no ads and no network
+> calls. If you ran `spinner-recruit install`, remove the shim with
+> `npx spinner-recruit uninstall`. Project write-up:
+> [spinnerrecruit.dev](https://spinnerrecruit.dev). Everything below describes
+> how it worked while it was live.
+
 Run `claude`, `codex`, or any terminal coding agent through this wrapper
 instead of calling it directly:
 

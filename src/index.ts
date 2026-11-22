@@ -28,6 +28,38 @@ import { noticeUpdateIfNeeded } from "./updateNotice";
 
 const AD_PANE_LINES = 2;
 
+// SpinnerRecruit was retired in November 2026: the ad API, dashboards and
+// payouts are shut down. With this on, the CLI never starts tmux and never
+// touches the network — it just runs the wrapped command directly. The
+// original implementation below is kept, unreachable, as a record of how the
+// product worked.
+const SUNSET = true;
+const SUNSET_URL = "https://spinnerrecruit.dev";
+
+const SUNSET_HELP_TEXT = `spinner-recruit has been retired — no ads are served and no network calls are made.
+
+  spinner-recruit <command> [args]      runs <command> directly, untouched
+  spinner-recruit uninstall [tool]      remove the \`claude\` (or [tool]) shim that \`install\` set up
+  spinner-recruit log                   print the ads you were shown while it was live
+
+Project write-up: ${SUNSET_URL}
+`;
+
+const HELP_TEXT = `Usage: spinner-recruit <command> [args]
+
+  spinner-recruit claude                run Claude through the wrapper (ads in a separate tmux pane)
+  spinner-recruit codex                 same, for Codex
+  spinner-recruit <any other command>   works with anything that prints a "Thinking"/"esc to interrupt" marker
+  spinner-recruit pair <developerId>    one-time: link impressions to your account
+  spinner-recruit optout                disable ads — no further network calls
+  spinner-recruit log                   print every ad you've been shown
+  spinner-recruit install [tool]        make bare \`claude\` (or [tool], e.g. \`codex\`) always run through this wrapper — defaults to claude
+  spinner-recruit uninstall [tool]      undo install for that tool — defaults to claude
+
+Requires tmux (the wrapper offers to install it on first run) and the tool
+you're wrapping — e.g. Claude Code itself — already on your PATH.
+`;
+
 function runPairCommand(developerId: string | undefined): void {
   if (!developerId) {
     console.error("Usage: spinner-recruit pair <developerId>");
@@ -59,6 +91,17 @@ function runLogCommand(): void {
 function spawnPlain(command: string, args: string[]): void {
   const child = spawn(command, args, { stdio: "inherit" });
   child.on("exit", (code) => process.exit(code ?? 0));
+  // Without this, a missing/misspelled command (e.g. `--help`, falling
+  // through as a "requested tool") surfaces as an unhandled ENOENT that
+  // crashes the whole process instead of a normal error message.
+  child.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "ENOENT") {
+      console.error(`spinner-recruit: \`${command}\` not found on your PATH.`);
+    } else {
+      console.error(`spinner-recruit: failed to run \`${command}\`: ${err.message}`);
+    }
+    process.exit(1);
+  });
 }
 
 // Claude runs directly in tmux's main pane — not through any process of
@@ -117,6 +160,62 @@ async function runWithTmux(command: string, args: string[]): Promise<void> {
   process.exit(exitCode);
 }
 
+// Retired-mode entry point: no tmux, no consent prompt, no network. Shimmed
+// users (bare `claude` routed here via `install`) are told how to remove the
+// shim every run, since until they do every launch still pays npx's startup
+// cost for nothing; everyone else sees the note once.
+function runSunset(args: string[]): void {
+  const shimTarget = process.env.SPINNER_RECRUIT_TARGET;
+
+  if (!shimTarget) {
+    if (args.length === 0 || args[0] === "--help" || args[0] === "-h" || args[0] === "help") {
+      console.log(SUNSET_HELP_TEXT);
+      return;
+    }
+    if (args[0] === "pair" || args[0] === "install" || args[0] === "optout") {
+      console.log(
+        `spinner-recruit has been retired — \`${args[0]}\` no longer does anything. ` +
+          `No ads are served and no network calls are made. ${SUNSET_URL}`,
+      );
+      return;
+    }
+    if (args[0] === "log") {
+      runLogCommand();
+      return;
+    }
+    if (args[0] === "uninstall") {
+      const explicitTool = args[1] && !args[1].startsWith("--");
+      uninstallShim(explicitTool ? args[1] : "claude", args.includes("--dry-run"));
+      return;
+    }
+  }
+
+  const requestedTool = args[0] ?? "claude";
+  const command = shimTarget ?? findRealTarget(requestedTool) ?? requestedTool;
+  const commandArgs = shimTarget ? args : args.slice(1);
+
+  if (shimTarget) {
+    console.error(
+      "spinner-recruit has been retired — running your command directly. " +
+        "Run `npx spinner-recruit uninstall` to remove this shim.",
+    );
+  } else {
+    const config = loadConfig();
+    if (!config.sunsetNoticeShown) {
+      console.error(
+        `spinner-recruit has been retired — running \`${requestedTool}\` directly, no ads. ${SUNSET_URL}`,
+      );
+      try {
+        saveConfig({ ...config, sunsetNoticeShown: true });
+      } catch {
+        // A read-only home directory must not stop the wrapped command.
+      }
+    }
+  }
+
+  spawnPlain(command, commandArgs);
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   // __adpane is how this process re-invokes itself as the ad-pane child via
@@ -128,7 +227,13 @@ async function main(): Promise<void> {
   // since that goes through runWithTmux too, it recurses into another
   // tmux-wrapped session indefinitely.
   if (args[0] === "__adpane") {
+    if (SUNSET) return;
     await runAdPane(args[1] ?? "", args[2] ?? "");
+    return;
+  }
+
+  if (SUNSET) {
+    runSunset(args);
     return;
   }
 
@@ -140,6 +245,10 @@ async function main(): Promise<void> {
   const shimTarget = process.env.SPINNER_RECRUIT_TARGET;
 
   if (!shimTarget) {
+    if (args[0] === "--help" || args[0] === "-h" || args[0] === "help") {
+      console.log(HELP_TEXT);
+      return;
+    }
     if (args[0] === "pair") {
       runPairCommand(args[1]);
       return;
@@ -153,13 +262,25 @@ async function main(): Promise<void> {
       return;
     }
     if (args[0] === "install") {
-      const tool = args[1] && !args[1].startsWith("--") ? args[1] : "claude";
-      installShim(tool, args.includes("--dry-run"));
+      const explicitTool = args[1] && !args[1].startsWith("--");
+      if (!explicitTool) {
+        console.log(
+          "No tool given — defaulting to claude. Run `spinner-recruit install codex` " +
+            "(or any other tool name) to target something else.",
+        );
+      }
+      installShim(explicitTool ? args[1] : "claude", args.includes("--dry-run"));
       return;
     }
     if (args[0] === "uninstall") {
-      const tool = args[1] && !args[1].startsWith("--") ? args[1] : "claude";
-      uninstallShim(tool, args.includes("--dry-run"));
+      const explicitUninstallTool = args[1] && !args[1].startsWith("--");
+      if (!explicitUninstallTool) {
+        console.log(
+          "No tool given — defaulting to claude. Run `spinner-recruit uninstall codex` " +
+            "(or any other tool name) to target something else.",
+        );
+      }
+      uninstallShim(explicitUninstallTool ? args[1] : "claude", args.includes("--dry-run"));
       return;
     }
   }

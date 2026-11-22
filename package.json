@@ -1,7 +1,7 @@
 {
   "name": "spinner-recruit",
-  "version": "0.4.1",
-  "description": "Run `claude`, `codex`, or any terminal coding agent through spinner-recruit to see a one-line job ad in its own tmux pane while it thinks. You keep 50% of paid-ad impression revenue.",
+  "version": "0.5.0",
+  "description": "Retired. SpinnerRecruit showed a one-line job ad in its own tmux pane while a terminal coding agent was thinking. This final version runs the wrapped command directly: no ads, no network calls.",
   "keywords": [
     "claude",
     "claude-code",
@@ -11,7 +11,11 @@
     "job-ads",
     "developer-tools"
   ],
-  "homepage": "https://spinnerrecruit-web.vercel.app",
+  "homepage": "https://spinnerrecruit.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamesmu03/spinnerrecruit.dev.git"
+  },
   "author": "jamesmu03",
   "license": "MIT",
   "bin": {

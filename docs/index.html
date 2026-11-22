@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpinnerRecruit: job ads in AI wait states</title>
+<meta name="description" content="SpinnerRecruit showed a one-line job ad next to a terminal coding agent while it was thinking, and paid developers half the revenue. An archived project by James Mu.">
+<meta property="og:title" content="SpinnerRecruit: job ads in AI wait states">
+<meta property="og:description" content="A CLI, an ad-serving API, and a payout system built in two weeks. Archived project write-up.">
+<meta property="og:image" content="https://spinnerrecruit.dev/img/og.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="img/icon.png">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --fg: #f5f3ff;
+    --muted: #18162a;
+    --card: #12111d;
+    --muted-fg: #a5a3c4;
+    --border: #2a2640;
+    --primary: #a78bfa;
+    --ad: #8b5cf6;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--primary); text-underline-offset: 3px; }
+  a:hover { color: var(--fg); }
+  img { max-width: 100%; height: auto; display: block; }
+  .wrap { max-width: 1008px; margin: 0 auto; padding: 0 16px; }
+
+  header { border-bottom: 1px solid var(--border); }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 60px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); text-decoration: none; }
+  .brand img { width: 28px; height: 28px; border-radius: 6px; }
+  .pill {
+    font-size: 12px; color: var(--muted-fg); border: 1px solid var(--border);
+    border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+  }
+
+  section { padding: 56px 0; }
+  section + section { border-top: 1px solid var(--border); }
+  h1 { font-size: clamp(32px, 6vw, 48px); line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 20px; text-wrap: balance; }
+  h1 span { color: var(--primary); }
+  h2 { font-size: 24px; letter-spacing: -0.02em; margin: 0 0 8px; }
+  h3 { font-size: 17px; margin: 0 0 6px; }
+  p { margin: 0 0 16px; }
+  .lede { font-size: 18px; color: var(--muted-fg); max-width: 640px; }
+  .sub { color: var(--muted-fg); max-width: 680px; }
+  .hero { text-align: center; padding-top: 72px; }
+  .hero .lede { margin-left: auto; margin-right: auto; }
+
+  .notice {
+    display: inline-block; margin: 8px auto 0; padding: 10px 16px; text-align: left;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+    color: var(--muted-fg); font-size: 14px; max-width: 640px;
+  }
+  .notice strong { color: var(--fg); font-weight: 600; }
+
+  .demo { margin: 40px auto 0; max-width: 800px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+
+  .terms { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center; gap: 20px; margin-top: 28px; }
+  .term {
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg);
+    font-family: var(--mono); font-size: 14px; display: flex; flex-direction: column; justify-content: center;
+    max-width: 100%;
+  }
+  .term div { padding: 18px 20px; white-space: nowrap; overflow-x: auto; color: var(--muted-fg); }
+  .term .ad { padding: 12px 14px; border-top: 1px solid var(--border); background: rgba(24, 22, 42, 0.6); color: var(--ad); }
+  .arrow { align-self: center; color: var(--muted-fg); }
+
+  .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); margin-top: 28px; }
+  .grid.two { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); }
+  .card { border: 1px solid var(--border); border-radius: 10px; background: var(--card); padding: 24px; }
+  .card p, .card li { color: var(--muted-fg); font-size: 15px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card ul { margin: 0; padding-left: 18px; }
+  .card li + li { margin-top: 6px; }
+  .tag { font-family: var(--mono); font-size: 12px; color: var(--primary); display: block; margin-bottom: 10px; }
+
+  ol.flow { list-style: none; counter-reset: step; margin: 28px 0 0; padding: 0; max-width: 760px; }
+  ol.flow li { counter-increment: step; position: relative; padding: 0 0 20px 44px; color: var(--muted-fg); }
+  ol.flow li::before {
+    content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--primary);
+    font: 600 13px/26px var(--mono); text-align: center;
+  }
+  ol.flow li strong { color: var(--fg); font-weight: 600; }
+  code { font-family: var(--mono); font-size: 0.88em; background: var(--muted); border-radius: 4px; padding: 1px 5px; color: var(--fg); }
+
+  .shots { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); margin-top: 28px; }
+  figure { margin: 0; }
+  figure a { display: block; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  figure img { aspect-ratio: 16 / 11; object-fit: cover; object-position: top; width: 100%; }
+  figcaption { font-size: 14px; color: var(--muted-fg); margin-top: 8px; }
+
+  .timeline { margin: 28px 0 0; padding: 0; list-style: none; max-width: 760px; }
+  .timeline li { display: grid; grid-template-columns: 92px 1fr; gap: 16px; padding: 10px 0; border-top: 1px solid var(--border); color: var(--muted-fg); }
+  .timeline li:first-child { border-top: 0; }
+  .timeline time { font-family: var(--mono); font-size: 13px; color: var(--primary); padding-top: 3px; }
+
+  footer { border-top: 1px solid var(--border); padding: 32px 0 48px; text-align: center; font-size: 13px; color: var(--muted-fg); }
+  footer p { margin: 0 0 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="img/logo.svg" alt="">SpinnerRecruit</a>
+    <span class="pill">Archived project · 2026</span>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Job ads in AI wait states.<br><span>Developers kept 50%.</span></h1>
+    <p class="lede">A one-line job ad that appeared next to Claude Code or Codex while the agent was thinking, targeted by the language you were writing in.</p>
+    <p class="notice"><strong>This project is retired.</strong> Ad serving, sign-ups, payments and payouts are switched off. This page is a record of what was built.</p>
+    <div class="demo"><img src="img/spinner-fast.gif" width="800" height="450" alt="Terminal recording: Claude Code is thinking, and a purple one-line job ad appears in a separate pane below it."></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>The idea</h2>
+    <p class="sub">Coding agents leave developers waiting for seconds or minutes at a time, dozens of times a day. SpinnerRecruit put one relevant job listing in that gap. Recruiters paid per impression, and the developer whose terminal showed the ad kept half.</p>
+    <div class="terms" aria-hidden="true">
+      <div class="term"><div>◌ Thinking… (12s · esc to interrupt)</div></div>
+      <span class="arrow">→</span>
+      <div class="term">
+        <div>◌ Thinking… (12s · esc to interrupt)</div>
+        <div class="ad">[ad] Vercel · Frontend Engineer · $180k · Remote</div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>For developers</h3>
+        <ul>
+          <li>50% of impression revenue, about $2.50 per 1,000</li>
+          <li>Cash out through Stripe once past $10</li>
+          <li>Only the active language was detected, never the code</li>
+          <li>The agent ran in its own tmux pane, so the ad could not touch its output</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>For recruiters</h3>
+        <ul>
+          <li>$5 CPM, $50 minimum, prepaid</li>
+          <li>Shown only to developers writing in the target languages</li>
+          <li>Self-serve: submit, fund, track impressions and clicks</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What was built</h2>
+    <p class="sub">Four pieces, built and shipped over about two weeks in June 2026.</p>
+    <div class="grid two">
+      <div class="card">
+        <span class="tag">cli/ · TypeScript</span>
+        <h3>The CLI</h3>
+        <p><code>npx spinner-recruit claude</code> ran the agent in one tmux pane and a two-line ad renderer in another. It watched for the "thinking" marker, fetched an ad, made it clickable, and kept a local log of every ad shown.</p>
+      </div>
+      <div class="card">
+        <span class="tag">api/ · Next.js route handlers</span>
+        <h3>Ad serving and billing</h3>
+        <p>Serve tokens, impression and click billing, per-session and per-IP rate caps, an ad review queue, Stripe Checkout for advertisers and Stripe Connect payouts for developers.</p>
+      </div>
+      <div class="card">
+        <span class="tag">web/ · Next.js, Tailwind</span>
+        <h3>Dashboards</h3>
+        <p>A landing page, a developer dashboard with GitHub login and earnings, a recruiter flow with a live bid queue, and an admin view for approving ads.</p>
+      </div>
+      <div class="card">
+        <span class="tag">supabase/ · Postgres</span>
+        <h3>The ledger</h3>
+        <p>Seven migrations: atomic billing functions, earnings views, row-level security, idempotent payout records and a GDPR self-erasure routine.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>How the money moved</h2>
+    <p class="sub">The whole loop was tested end to end with real payments, including a real payout.</p>
+    <ol class="flow">
+      <li><strong>A recruiter submitted an ad</strong> and paid through Stripe Checkout. A webhook credited the ad's prepaid budget and sent it to review.</li>
+      <li><strong>A developer ran their agent through the CLI.</strong> When the agent started thinking, the ad pane asked the API for an ad.</li>
+      <li><strong>The API picked an ad by weighted lottery</strong> among the top bidders targeting the developer's language, and issued a one-time serve token.</li>
+      <li><strong>After five seconds on screen</strong> the CLI reported the impression. The advertiser was billed and the developer credited half.</li>
+      <li><strong>A click went through a redirect</strong> that billed the advertiser. Developers earned nothing on clicks, which removed any reason to click their own ads.</li>
+      <li><strong>Past $10, the developer cashed out</strong> to their bank through a Stripe Connect transfer.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Engineering notes</h2>
+    <p class="sub">The decisions that took the most work to get right.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>tmux instead of terminal tricks</h3>
+        <p>The first CLI reserved a terminal row for the ad by reporting the agent a shorter screen. It corrupted the agent's display in real use. Running the agent and the ad in separate tmux panes made interference impossible instead of unlikely.</p>
+      </div>
+      <div class="card">
+        <h3>Clients never name what they bill</h3>
+        <p>The API pinned the ad, session and developer to a serve token when it handed out an ad. A tampered client could only create rate-capped serves, never forge an impression for someone else.</p>
+      </div>
+      <div class="card">
+        <h3>Money as integer micros</h3>
+        <p>Every amount was a 64-bit integer where $1 is 1,000,000, so half of a $0.005 impression stayed exact. Dollars appeared only at the Stripe boundary.</p>
+      </div>
+      <div class="card">
+        <h3>Payouts that cannot double-pay</h3>
+        <p>Stripe events were de-duplicated in a table, a unique index allowed one in-flight payout per developer, and each transfer carried its payout ID as an idempotency key.</p>
+      </div>
+      <div class="card">
+        <h3>A lottery, not an auction</h3>
+        <p>A higher bid bought a larger share of impressions rather than exclusivity, so developers kept seeing variety and small advertisers still got served.</p>
+      </div>
+      <div class="card">
+        <h3>A pivot in week one</h3>
+        <p>It launched as a VS Code extension. Three days later it was rebuilt as a CLI so it worked in any terminal, with no marketplace review and no editor API in the way.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Screens</h2>
+    <p class="sub">Captured from the live site before it was taken down.</p>
+    <div class="shots">
+      <figure><a href="img/home.png"><img src="img/home.png" loading="lazy" alt="Landing page with before and after terminal mockups"></a><figcaption>Landing page</figcaption></figure>
+      <figure><a href="img/advertise.png"><img src="img/advertise.png" loading="lazy" alt="Recruiter page with a pricing table and an explanation of ad serving"></a><figcaption>Recruiter pricing and serving rules</figcaption></figure>
+      <figure><a href="img/advertise-new.png"><img src="img/advertise-new.png" loading="lazy" alt="Form for posting a job ad with language targeting"></a><figcaption>Posting a job</figcaption></figure>
+      <figure><a href="img/advertise-dashboard.png"><img src="img/advertise-dashboard.png" loading="lazy" alt="Table of active ads with remaining budget and target languages"></a><figcaption>Live bid queue</figcaption></figure>
+      <figure><a href="img/me.png"><img src="img/me.png" loading="lazy" alt="Developer dashboard sign-in screen"></a><figcaption>Developer dashboard sign-in</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Timeline</h2>
+    <ul class="timeline">
+      <li><time>Jun 12</time><span>First commit.</span></li>
+      <li><time>Jun 14</time><span>VS Code extension published; web and API live.</span></li>
+      <li><time>Jun 17</time><span>Rebuilt as a tmux-based CLI after the row-stealing approach broke the agent's display.</span></li>
+      <li><time>Jun 22</time><span>CLI source made public. Full money loop tested with real payments, including a $10 payout.</span></li>
+      <li><time>Jun 23</time><span>CLI 0.4.0 on npm: plain-click ad links and a local ad log.</span></li>
+      <li><time>Jun 28</time><span>Last feature work: curated listings, review notifications, bid queue.</span></li>
+      <li><time>Nov 2026</time><span>Retired. Backend shut down; the CLI's final release runs the wrapped command directly with no ads and no network calls.</span></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>CLI source: <a href="https://github.com/jamesmu03/spinnerrecruit.dev">github.com/jamesmu03/spinnerrecruit.dev</a></p>
+    <p>Built by <a href="https://jamessmu.com">James Mu</a>. Not affiliated with or endorsed by Anthropic or OpenAI.</p>
+  </div>
+</footer>
+
+</body>
+</html>

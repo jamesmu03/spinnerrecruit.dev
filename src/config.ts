@@ -9,6 +9,7 @@ export interface Config {
   consented: boolean;
   developerId?: string;
   lastSeenVersion?: string;
+  sunsetNoticeShown?: boolean;
 }
 
 export function loadConfig(): Config {
